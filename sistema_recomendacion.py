@@ -18,11 +18,11 @@ def leer_matriz_utilidad(fichero):
     
     return np.array(matriz), min_val, max_val
 
-# Calcular Correlación de Pearson manualmente
+# Calcular Correlación de Pearson
 def pearson_correlation(usuario1, usuario2):
-    mask = ~np.isnan(usuario1) & ~np.isnan(usuario2)  # Solo considerar ítems calificados por ambos usuarios
+    mask = ~np.isnan(usuario1) & ~np.isnan(usuario2)  
     if np.sum(mask) == 0:
-        return 0  # No hay datos comunes
+        return 0  # No hay datos comunes, devolver 0
     
     usuario1_filtrado = usuario1[mask]
     usuario2_filtrado = usuario2[mask]
@@ -35,12 +35,12 @@ def pearson_correlation(usuario1, usuario2):
     
     return numerador / denominador if denominador != 0 else 0
 
-# Calcular Distancia Coseno manualmente
+# Calcular Distancia Coseno
 def cosine_similarity(usuario1, usuario2):
     mask = ~np.isnan(usuario1) & ~np.isnan(usuario2)
     if np.sum(mask) == 0:
-        return 0
-    
+        return 0  # No hay datos comunes, devolver 0
+
     usuario1_filtrado = usuario1[mask]
     usuario2_filtrado = usuario2[mask]
     
@@ -50,38 +50,56 @@ def cosine_similarity(usuario1, usuario2):
     
     return dot_product / (norm1 * norm2) if norm1 != 0 and norm2 != 0 else 0
 
-# Calcular Distancia Euclídea manualmente
+# Calcular Distancia Euclídea
 def euclidean_distance(usuario1, usuario2):
     mask = ~np.isnan(usuario1) & ~np.isnan(usuario2)
     if np.sum(mask) == 0:
-        return 0
+        return 0  # No hay datos comunes, devolver 0
     
     usuario1_filtrado = usuario1[mask]
     usuario2_filtrado = usuario2[mask]
     
     return 1 / (1 + np.sqrt(np.sum((usuario1_filtrado - usuario2_filtrado) ** 2)))
 
-# Calcular similaridad entre usuarios usando la métrica seleccionada
-def calcular_similaridad(usuario1, usuario2, metrica):
+# Calcular similaridad entre usuarios o ítems usando la métrica seleccionada
+def calcular_similaridad(matriz, idx1, idx2, metrica, es_usuario=True):
+    if es_usuario:
+        return calcular_similaridad_usuario(matriz[idx1], matriz[idx2], metrica)
+    else:
+        return calcular_similaridad_item(matriz[:, idx1], matriz[:, idx2], metrica)
+
+def calcular_similaridad_usuario(usuario1, usuario2, metrica):
     if metrica == 'pearson':
         return pearson_correlation(usuario1, usuario2)
-    elif metrica == 'cosine':
+    elif metrica == 'coseno':
         return cosine_similarity(usuario1, usuario2)
     elif metrica == 'euclidean':
         return euclidean_distance(usuario1, usuario2)
     else:
-        raise ValueError("Métrica no reconocida. Use 'pearson', 'cosine', o 'euclidean'.")
+        raise ValueError("Métrica no reconocida. Use 'pearson', 'coseno', o 'euclidean'.")
+
+def calcular_similaridad_item(item1, item2, metrica):
+    return calcular_similaridad_usuario(item1, item2, metrica)
+
+# Mostrar la métrica seleccionada entre los usuarios o ítems
+def mostrar_metricas(matriz, metrica, es_usuario=True):
+    print("\nMétrica entre los " + ("usuarios:" if es_usuario else "ítems:"))
+    n = matriz.shape[0] if es_usuario else matriz.shape[1]
+    
+    for i in range(n):
+        for j in range(i + 1, n):
+            similaridad = calcular_similaridad(matriz, i, j, metrica, es_usuario)
+            print(f"{'Usuario' if es_usuario else 'Ítem'} {i+1} - {'Usuario' if es_usuario else 'Ítem'} {j+1}: {metrica.capitalize()} = {similaridad:.3f}")
 
 # Seleccionar los vecinos más cercanos
-def obtener_vecinos(matriz, usuario_idx, metrica, num_vecinos):
+def obtener_vecinos(matriz, idx, metrica, num_vecinos, es_usuario=True):
     distancias = []
-    usuario = matriz[usuario_idx]
-    for idx, otro_usuario in enumerate(matriz):
-        if idx != usuario_idx:
-            similaridad = calcular_similaridad(usuario, otro_usuario, metrica)
-            distancias.append((idx, similaridad))
+    entidad = matriz[idx] if es_usuario else matriz[:, idx]
+    for i in range(matriz.shape[0] if es_usuario else matriz.shape[1]):
+        if i != idx:
+            similaridad = calcular_similaridad(matriz, idx, i, metrica, es_usuario)
+            distancias.append((i, similaridad))
     
-    # Ordenar por similaridad y seleccionar los vecinos más cercanos
     distancias.sort(key=lambda x: x[1], reverse=True)
     return distancias[:num_vecinos]
 
@@ -108,16 +126,24 @@ def predecir_con_media(matriz, usuario_idx, item_idx, vecinos):
     return media_usuario + (num / denom) if denom != 0 else np.nan
 
 # Predicción para completar la matriz de utilidad
-def predecir_matriz(matriz, metrica, num_vecinos, tipo_prediccion):
+def predecir_matriz(matriz, metrica, num_vecinos, tipo_prediccion, es_usuario=True):
     matriz_predicha = np.copy(matriz)
-    for usuario_idx in range(matriz.shape[0]):
-        vecinos = obtener_vecinos(matriz, usuario_idx, metrica, num_vecinos)
-        for item_idx in range(matriz.shape[1]):
-            if np.isnan(matriz[usuario_idx, item_idx]):
+    n = matriz.shape[0] if es_usuario else matriz.shape[1]
+    
+    for idx in range(n):
+        vecinos = obtener_vecinos(matriz, idx, metrica, num_vecinos, es_usuario)
+        for item_idx in range(matriz.shape[1] if es_usuario else matriz.shape[0]):
+            if np.isnan(matriz[idx, item_idx]) if es_usuario else np.isnan(matriz[item_idx, idx]):
                 if tipo_prediccion == 'simple':
-                    matriz_predicha[usuario_idx, item_idx] = predecir_simple(matriz, usuario_idx, item_idx, vecinos)
+                    if es_usuario:
+                        matriz_predicha[idx, item_idx] = predecir_simple(matriz, idx, item_idx, vecinos)
+                    else:
+                        matriz_predicha[item_idx, idx] = predecir_simple(matriz.T, item_idx, idx, vecinos)
                 elif tipo_prediccion == 'media':
-                    matriz_predicha[usuario_idx, item_idx] = predecir_con_media(matriz, usuario_idx, item_idx, vecinos)
+                    if es_usuario:
+                        matriz_predicha[idx, item_idx] = predecir_con_media(matriz, idx, item_idx, vecinos)
+                    else:
+                        matriz_predicha[item_idx, idx] = predecir_con_media(matriz.T, item_idx, idx, vecinos)
     return matriz_predicha
 
 # Función para imprimir la matriz con un formato adecuado
@@ -130,21 +156,36 @@ def imprimir_matriz(matriz):
 def main():
     parser = argparse.ArgumentParser(description="Sistema de recomendación basado en filtrado colaborativo de películas y series.")
     parser.add_argument('fichero', type=str, help="Ruta al fichero con la matriz de utilidad (TXT)")
-    parser.add_argument('--metrica', type=str, choices=['pearson', 'cosine', 'euclidean'], required=True, help="Métrica de similaridad")
+    parser.add_argument('--metrica', type=str, choices=['pearson', 'coseno', 'euclidean'], required=True, help="Métrica de similaridad")
     parser.add_argument('--vecinos', type=int, required=True, help="Número de vecinos a considerar")
     parser.add_argument('--prediccion', type=str, choices=['simple', 'media'], required=True, help="Tipo de predicción ('simple' o 'media')")
+    parser.add_argument('--tipo', type=str, choices=['usuario', 'item'], required=True, help="Tipo de operación ('usuario' o 'item')")
     
     args = parser.parse_args()
+
+    # Mostrar opciones seleccionadas
+    print(f"\nOpciones seleccionadas:\nMétrica: {args.metrica}\nNúmero de vecinos: {args.vecinos}\nTipo de predicción: {args.prediccion}\nTipo: {args.tipo}")
 
     # Leer la matriz de utilidad
     matriz, min_val, max_val = leer_matriz_utilidad(args.fichero)
 
-    # Predecir los valores faltantes en la matriz de utilidad
-    matriz_predicha = predecir_matriz(matriz, args.metrica, args.vecinos, args.prediccion)
+    # Mostrar la matriz original
+    print("\nMatriz de utilidad original:")
+    imprimir_matriz(matriz)
 
-    # Mostrar la matriz predicha con el formato adecuado
-    print("\nMatriz predicha:")
+    # Mostrar métricas solo para la opción seleccionada
+    if args.tipo == 'usuario':
+        mostrar_metricas(matriz, args.metrica, es_usuario=True)
+        matriz_predicha = predecir_matriz(matriz, args.metrica, args.vecinos, args.prediccion, es_usuario=True)
+    else:
+        mostrar_metricas(matriz.T, args.metrica, es_usuario=False)
+        matriz_predicha = predecir_matriz(matriz.T, args.metrica, args.vecinos, args.prediccion, es_usuario=False).T
+
+    # Predecir la matriz y mostrar resultados
+    matriz_predicha = predecir_matriz(matriz, args.metrica, args.vecinos, args.prediccion, es_usuario=(args.tipo == 'usuario'))
+
+    print("\nMatriz de utilidad predicha:")
     imprimir_matriz(matriz_predicha)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
