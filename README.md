@@ -28,7 +28,7 @@ El sistema se ejecuta desde línea de comandos. Debes especificar la ruta al arc
 
 ### Ejemplo de ejecución
 ```bash
-python3 sistema_recomendacion.py matriz_utilidad.txt --metrica pearson --vecinos 5 --prediccion simple --tipo usuario
+python3 sistema_recomendacion.py matriz_utilidad.txt --metrica pearson --vecinos 5 --prediccion simple
 ```
 
 ### Argumentos
@@ -36,7 +36,6 @@ python3 sistema_recomendacion.py matriz_utilidad.txt --metrica pearson --vecinos
 - `--metrica`: Métrica de similaridad a utilizar (`pearson`, `cosine`, `euclidean`).
 - `--vecinos`: Número de vecinos más cercanos a considerar.
 - `--prediccion`: Tipo de predicción a realizar (`simple`, `media`).
-- `--tipo`: Decide si el usuario trabaja por filas o por columnas (`usuario`, `item`).
 
 ### Ejemplo de salida
 Al ejecutar el sistema con el archivo anterior, se mostrará la matriz de utilidad completada con las predicciones de los ítems faltantes:
