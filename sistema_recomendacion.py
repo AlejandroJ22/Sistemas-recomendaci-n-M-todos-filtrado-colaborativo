@@ -76,14 +76,17 @@ def calcular_similaridad(usuario1, usuario2, metrica):
     else:
         raise ValueError("Métrica no reconocida. Use 'pearson', 'coseno', o 'euclidean'.")
 
-# Mostrar la métrica seleccionada entre los usuarios
+# Mostrar la métrica seleccionada entre los usuarios y devolver los resultados como lista
 def mostrar_metricas(matriz, metrica):
     n = matriz.shape[0]
+    metricas_resultado = []
     
     for i in range(n):
         for j in range(i + 1, n):
             similaridad = calcular_similaridad(matriz[i], matriz[j], metrica)
-            print(f"Usuario {i+1} - Usuario {j+1}: {metrica.capitalize()} = {similaridad:.3f}")
+            metricas_resultado.append(f"Usuario {i+1} - Usuario {j+1}: {metrica.capitalize()} = {similaridad:.3f}")
+    
+    return metricas_resultado
 
 # Seleccionar los vecinos más cercanos
 def obtener_vecinos(matriz, idx, metrica, num_vecinos):
@@ -120,25 +123,53 @@ def predecir_con_media(matriz, usuario_idx, item_idx, vecinos):
     return media_usuario + (num / denom) if denom != 0 else np.nan
 
 # Predicción para completar la matriz de utilidad
+# Hacer predicción para completar la matriz de utilidad y guardar las predicciones
 def predecir_matriz(matriz, metrica, num_vecinos, tipo_prediccion):
     matriz_predicha = np.copy(matriz)
     n = matriz.shape[0]
+    predicciones_hechas = []  # Lista para almacenar las predicciones realizadas
     
     for idx in range(n):
         vecinos = obtener_vecinos(matriz, idx, metrica, num_vecinos)
         for item_idx in range(matriz.shape[1]):
             if np.isnan(matriz[idx, item_idx]):
                 if tipo_prediccion == 'simple':
-                    matriz_predicha[idx, item_idx] = predecir_simple(matriz, idx, item_idx, vecinos)
+                    prediccion = predecir_simple(matriz, idx, item_idx, vecinos)
                 elif tipo_prediccion == 'media':
-                    matriz_predicha[idx, item_idx] = predecir_con_media(matriz, idx, item_idx, vecinos)
-    return matriz_predicha
+                    prediccion = predecir_con_media(matriz, idx, item_idx, vecinos)
+                
+                matriz_predicha[idx, item_idx] = prediccion
+                predicciones_hechas.append((idx + 1, item_idx + 1, prediccion))  # Almacena el índice del usuario, el ítem y la predicción
+    
+    return matriz_predicha, predicciones_hechas
 
 # Función para imprimir la matriz con un formato adecuado
 def imprimir_matriz(matriz):
     for fila in matriz:
         fila_formateada = ['{:.1f}'.format(x) if not np.isnan(x) else '-' for x in fila]
         print(" ".join(fila_formateada))
+
+# Guardar la matriz en un fichero junto con las métricas
+def guardar_matriz(fichero_salida, matriz, min_val, max_val, metricas, predicciones_hechas, matriz_predicha):
+    with open(fichero_salida, 'w') as f:
+        
+        # Escribir las métricas
+        f.write("Métricas:\n")
+        f.write("\n".join(metricas) + "\n\n")
+        
+        # Escribir las predicciones
+        f.write("Predicciones:\n")
+        for usuario, item, prediccion in predicciones_hechas:
+            f.write(f"Usuario {usuario}, Ítem {item}: Predicción = {prediccion:.1f}\n")
+        f.write("\n")
+
+        f.write("Matriz Predicha:\n")
+        f.write(f"{min_val:.1f}\n")
+        f.write(f"{max_val:.1f}\n")
+
+        for fila in matriz_predicha:
+            fila_formateada = ['{:.1f}'.format(x) if not np.isnan(x) else '-' for x in fila]
+            f.write(" ".join(fila_formateada) + "\n")
 
 # Función principal
 def main():
@@ -147,27 +178,23 @@ def main():
     parser.add_argument('--metrica', type=str, choices=['pearson', 'coseno', 'euclidean'], required=True, help="Métrica de similaridad")
     parser.add_argument('--vecinos', type=int, required=True, help="Número de vecinos a considerar")
     parser.add_argument('--prediccion', type=str, choices=['simple', 'media'], required=True, help="Tipo de predicción ('simple' o 'media')")
+    parser.add_argument('--salida', type=str, required=True, help="Ruta del fichero de salida para guardar la matriz predicha")
     
     args = parser.parse_args()
-
-    # Mostrar opciones seleccionadas
-    print(f"\nOpciones seleccionadas:\nMétrica: {args.metrica}\nNúmero de vecinos: {args.vecinos}\nTipo de predicción: {args.prediccion}")
 
     # Leer la matriz de utilidad
     matriz, min_val, max_val = leer_matriz_utilidad(args.fichero)
 
-    # Mostrar la matriz original
-    print("\nMatriz de utilidad original:")
-    imprimir_matriz(matriz)
+    # Calcular métricas
+    metricas = mostrar_metricas(matriz, args.metrica)
 
-    # Mostrar métricas solo entre usuarios
-    mostrar_metricas(matriz, args.metrica)
+    # Predecir la matriz y obtener las predicciones
+    matriz_predicha, predicciones_hechas = predecir_matriz(matriz, args.metrica, args.vecinos, args.prediccion)
+    
+    # Guardar los resultados en un fichero
+    guardar_matriz(args.salida, matriz, min_val, max_val, metricas, predicciones_hechas, matriz_predicha)
 
-    # Predecir la matriz y mostrar resultados
-    matriz_predicha = predecir_matriz(matriz, args.metrica, args.vecinos, args.prediccion)
-
-    print("\nMatriz de utilidad predicha:")
-    imprimir_matriz(matriz_predicha)
+    print(f"\nMatriz predicha y métricas guardadas en: {args.salida}")
 
 if __name__ == "__main__":
     main()
