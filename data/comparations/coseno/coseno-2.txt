@@ -1,0 +1,23 @@
+Métricas:
+Usuario 1 - Usuario 2: Coseno = 0.975
+Usuario 1 - Usuario 3: Coseno = 0.992
+Usuario 1 - Usuario 4: Coseno = 0.891
+Usuario 1 - Usuario 5: Coseno = 0.797
+Usuario 2 - Usuario 3: Coseno = 0.959
+Usuario 2 - Usuario 4: Coseno = 0.936
+Usuario 2 - Usuario 5: Coseno = 0.638
+Usuario 3 - Usuario 4: Coseno = 0.894
+Usuario 3 - Usuario 5: Coseno = 0.772
+Usuario 4 - Usuario 5: Coseno = 0.638
+
+Predicciones:
+Usuario 1, Ítem 5: Predicción = 4.0
+
+Matriz Predicha:
+1.0
+5.0
+5.0 3.0 4.0 4.0 4.0
+3.0 1.0 2.0 3.0 3.0
+4.0 3.0 4.0 3.0 5.0
+3.0 3.0 1.0 5.0 4.0
+1.0 5.0 5.0 2.0 1.0
