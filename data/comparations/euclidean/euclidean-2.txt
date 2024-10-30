@@ -1,0 +1,23 @@
+Métricas:
+Usuario 1 - Usuario 2: Euclidean = 0.217
+Usuario 1 - Usuario 3: Euclidean = 0.414
+Usuario 1 - Usuario 4: Euclidean = 0.211
+Usuario 1 - Usuario 5: Euclidean = 0.167
+Usuario 2 - Usuario 3: Euclidean = 0.217
+Usuario 2 - Usuario 4: Euclidean = 0.240
+Usuario 2 - Usuario 5: Euclidean = 0.146
+Usuario 3 - Usuario 4: Euclidean = 0.205
+Usuario 3 - Usuario 5: Euclidean = 0.152
+Usuario 4 - Usuario 5: Euclidean = 0.134
+
+Predicciones:
+Usuario 1, Ítem 5: Predicción = 4.3
+
+Matriz Predicha:
+1.0
+5.0
+5.0 3.0 4.0 4.0 4.3
+3.0 1.0 2.0 3.0 3.0
+4.0 3.0 4.0 3.0 5.0
+3.0 3.0 1.0 5.0 4.0
+1.0 5.0 5.0 2.0 1.0

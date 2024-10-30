@@ -1,0 +1,23 @@
+Métricas:
+Usuario 1 - Usuario 2: Pearson = 0.853
+Usuario 1 - Usuario 3: Pearson = 0.707
+Usuario 1 - Usuario 4: Pearson = 0.000
+Usuario 1 - Usuario 5: Pearson = -0.792
+Usuario 2 - Usuario 3: Pearson = 0.468
+Usuario 2 - Usuario 4: Pearson = 0.490
+Usuario 2 - Usuario 5: Pearson = -0.900
+Usuario 3 - Usuario 4: Pearson = -0.161
+Usuario 3 - Usuario 5: Pearson = -0.467
+Usuario 4 - Usuario 5: Pearson = -0.642
+
+Predicciones:
+Usuario 1, Ítem 5: Predicción = 3.9
+
+Matriz Predicha:
+1.0
+5.0
+5.0 3.0 4.0 4.0 3.9
+3.0 1.0 2.0 3.0 3.0
+4.0 3.0 4.0 3.0 5.0
+3.0 3.0 1.0 5.0 4.0
+1.0 5.0 5.0 2.0 1.0
